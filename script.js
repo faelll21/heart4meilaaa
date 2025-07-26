@@ -1,148 +1,115 @@
+var canvas = document.getElementById("heart");
+canvas.width = 600;
+canvas.height = 600;
+canvas.style.width = canvas.width + "px";
+canvas.style.height = canvas.height + "px";
 
-window.requestAnimationFrame =
-  window.__requestAnimationFrame ||
-  window.requestAnimationFrame ||
-  window.webkitRequestAnimationFrame ||7
-  window.mozRequestAnimationFrame ||
-  window.oRequestAnimationFrame ||
-  window.msRequestAnimationFrame ||
-  (function () {
-    return function (callback, element) {
-      var lastTime = element.__lastTime;
-      if (lastTime === undefined) {
-        lastTime = 0;
-      }
-      var currTime = Date.now();
-      var timeToCall = Math.max(1, 33 - (currTime - lastTime));
-      window.setTimeout(callback, timeToCall);
-      element.__lastTime = currTime + timeToCall;
-    };
-  })();
+var context = canvas.getContext("2d");
+context.translate(canvas.width / 2, canvas.height / 2);
+context.scale(1, -1);
+context.moveTo(0, 0);
 
-window.isDevice = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(((navigator.userAgent || navigator.vendor || window.opera)).toLowerCase()));
+context.fillStyle = '#ea80b0';
 
-var loaded = false;
-var init = function () {
-  if (loaded) return;
-  loaded = true;
-  var mobile = window.isDevice;
-  var koef = mobile ? 0.5 : 1;
-  var canvas = document.getElementById('heart');
-  var ctx = canvas.getContext('2d');
-  var width = canvas.width = koef * innerWidth;
-  var height = canvas.height = koef * innerHeight;
-  var rand = Math.random;
-  ctx.fillStyle = "rgba(0,0,0,1)";
-  ctx.fillRect(0, 0, width, height);
+function xin(t, r, j, ws) {
+    this.trans = t;
+    this.rs = r;
+    this.ws = ws;
+    this.index = j;
+    this.x = this.trans * this.ws * Math.sin(this.index) * Math.sin(this.index) * Math.sin(this.index);
+    this.y = this.trans * (16 * Math.cos(this.index) - 5 * Math.cos(2 * this.index) - 2 * Math.cos(3 * this.index) - Math.cos(4 * this.index));
+}
 
-  var heartPosition = function (rad) {
-    return [Math.pow(Math.sin(rad), 3), -(15 * Math.cos(rad) - 5 * Math.cos(2 * rad) - 2 * Math.cos(3 * rad) - Math.cos(4 * rad))];
-  };
+let ws = 18;
+let hs = 16;
+let wsSpeed = 0.15;
+let hsSpeed = 0.15;
+let speed = 0.2;
 
-  var scaleAndTranslate = function (pos, sx, sy, dx, dy) {
-    return [dx + pos[0] * sx, dy + pos[1] * sy];
-  };
+let wqs = [];
+let nqs = [];
+let hxz = [];
+let hxz2 = [];
+let dc = [];
 
-  window.addEventListener('resize', function () {
-    width = canvas.width = koef * innerWidth;
-    height = canvas.height = koef * innerHeight;
-    ctx.fillStyle = "rgba(0,0,0,1)";
-    ctx.fillRect(0, 0, width, height);
-  });
+sdata();
 
-  var traceCount = mobile ? 20 : 50;
-  var pointsOrigin = [];
-  var i;
-  var dr = mobile ? 0.3 : 0.1;
-  for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), 210, 13, 0, 0));
-  for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), 150, 9, 0, 0));
-  for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), 90, 5, 0, 0));
-  var heartPointsCount = pointsOrigin.length;
-
-  var targetPoints = [];
-  var pulse = function (kx, ky) {
-    for (i = 0; i < pointsOrigin.length; i++) {
-      targetPoints[i] = [];
-      targetPoints[i][0] = kx * pointsOrigin[i][0] + width / 2;
-      targetPoints[i][1] = ky * pointsOrigin[i][1] + height / 2;
+function sdata() {
+    for (let j = 0; j < 500; j += speed) {
+        let trans = 9 + Math.random() * 2.5;
+        let size = Math.random() * 2;
+        let xins = new xin(trans, size, j, ws);
+        wqs.push(xins);
     }
-  };
 
-  var e = [];
-  for (i = 0; i < heartPointsCount; i++) {
-    var x = rand() * width;
-    var y = rand() * height;
-    e[i] = {
-      vx: 0,
-      vy: 0,
-      R: 2,
-      speed: rand() + 5,
-      q: ~~(rand() * heartPointsCount),
-      D: 2 * (i % 2) - 1,
-      force: 0.2 * rand() + 0.7,
-      f: "hsla(0," + ~~(40 * rand() + 60) + "%," + ~~(60 * rand() + 20) + "%,.3)",
-      trace: []
-    };
-    for (var k = 0; k < traceCount; k++) e[i].trace[k] = { x: x, y: y };
-  }
+    for (let j = 0; j < 300; j += speed) {
+        let trans = 7 + Math.random() * 5;
+        let size = Math.random() * 2.5;
+        let xins = new xin(trans, size, j, ws);
+        nqs.push(xins);
+    }
 
-  var config = {
-    traceK: 0.4,
-    timeDelta: 0.01
-  };
+    for (let j = 0; j < 600; j += speed) {
+        let trans = 11 + Math.random() * 2;
+        let size = Math.random() * 3.5;
+        let xins = new xin(trans, size, j, ws);
+        hxz.push(xins);
+    }
 
-  var time = 0;
-  var loop = function () {
-    var n = -Math.cos(time);
-    pulse((1 + n) * .5, (1 + n) * .5);
-    time += ((Math.sin(time)) < 0 ? 9 : (n > 0.8) ? .2 : 1) * config.timeDelta;
-    ctx.fillStyle = "rgba(0,0,0,.1)";
-    ctx.fillRect(0, 0, width, height);
-    for (i = e.length; i--;) {
-      var u = e[i];
-      var q = targetPoints[u.q];
-      var dx = u.trace[0].x - q[0];
-      var dy = u.trace[0].y - q[1];
-      var length = Math.sqrt(dx * dx + dy * dy);
-      if (10 > length) {
-        if (0.95 < rand()) {
-          u.q = ~~(rand() * heartPointsCount);
-        } else {
-          if (0.99 < rand()) {
-            u.D *= -1;
-          }
-          u.q += u.D;
-          u.q %= heartPointsCount;
-          if (0 > u.q) {
-            u.q += heartPointsCount;
-          }
+    for (let j = 0; j < 500; j += speed) {
+        let trans = 0 + Math.random() * 2.7;
+        let size = Math.random() * 2.5;
+        let xins = new xin(trans, size, j, ws);
+        hxz2.push(xins);
+    }
+
+    function animate() {
+        context.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+        ws += wsSpeed;
+        if (ws < 16) {
+            wsSpeed *= -1;
+        } else if (ws > 18) {
+            wsSpeed *= -1;
         }
-      }
-      u.vx += -dx / length * u.speed;
-      u.vy += -dy / length * u.speed;
-      u.trace[0].x += u.vx;
-      u.trace[0].y += u.vy;
-      u.vx *= u.force;
-      u.vy *= u.force;
-      for (k = 0; k < u.trace.length - 1;) {
-        var T = u.trace[k];
-        var N = u.trace[++k];
-        N.x -= config.traceK * (N.x - T.x);
-        N.y -= config.traceK * (N.y - T.y);
-      }
-      ctx.fillStyle = u.f;
-      for (k = 0; k < u.trace.length; k++) {
-        ctx.fillRect(u.trace[k].x, u.trace[k].y, 1, 1);
-      }
+        hs += hsSpeed;
+        if (hs < 14) {
+            hsSpeed *= -1;
+        } else if (hs > 16) {
+            hsSpeed *= -1;
+        }
+
+        [hxz, hxz2, nqs, wqs].forEach(collection => {
+            collection.forEach(v => {
+                context.beginPath();
+                context.arc(
+                    v.trans * ws * Math.sin(v.index) * Math.sin(v.index) * Math.sin(v.index), 
+                    v.trans * (hs * Math.cos(v.index) - 5 * Math.cos(2 * v.index) - 2 * Math.cos(3 * v.index) - Math.cos(4 * v.index)), 
+                    v.rs, 0, Math.PI * 2
+                );
+                context.fill();
+                context.stroke();
+                context.closePath();
+            });
+        });
+
+        dc = [];
+        for (let j = 0; j < 300; j += speed) {
+            let trans = 1 + Math.random() * 20;
+            let size = Math.random() * 2;
+            let xins = new xin(trans, size, j, ws);
+            dc.push(xins);
+        }
+
+        dc.forEach(v => {
+            context.beginPath();
+            context.arc(v.x, v.y, v.rs, 0, Math.PI * 2);
+            context.fill();
+            context.stroke();
+            context.closePath();
+        });
+
+        requestAnimationFrame(animate);
     }
-    ctx.fillStyle = "rgba(255,255,255,1)";
-    for (i = u.trace.length + 13; i--;) ctx.fillRect(targetPoints[i][0], targetPoints[i][1], 2, 2);
 
-    window.requestAnimationFrame(loop, canvas);
-  };
-  loop();
-};
-
-var s = document.readyState;
-if (s === 'complete' || s === 'loaded' || s === 'interactive') init();
-else document.addEventListener('DOMContentLoaded', init, false);
+    animate();
+}
